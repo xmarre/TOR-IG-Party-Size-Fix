@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Module>
+	<Name value="TOR-IG Party Size Fix"/>
+	<Id value="TOR_IG_PartyLimitFix"/>
+	<Version value="v1.0.0"/>
+	<SingleplayerModule value="true"/>
+
+	<DependedModules>
+		<DependedModule Id="Bannerlord.Harmony"/>
+		<DependedModule Id="Native"/>
+		<DependedModule Id="SandBoxCore"/>
+		<DependedModule Id="Sandbox"/>
+		<DependedModule Id="StoryMode" Optional="true"/>
+	</DependedModules>
+
+	<SubModules>
+		<SubModule>
+			<Name value="TOR-IG Party Size Fix"/>
+			<DLLName value="TOR_IG_PartyLimitFix.dll"/>
+			<SubModuleClassType value="TOR_IG_PartyLimitFix.SubModule"/>
+			<Tags>
+				<Tag key="DedicatedServerType" value="none"/>
+				<Tag key="IsNoRenderModeElement" value="false"/>
+			</Tags>
+		</SubModule>
+	</SubModules>
+</Module>
