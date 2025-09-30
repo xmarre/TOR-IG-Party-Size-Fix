@@ -66,7 +66,7 @@ namespace TOR_IG_PartyLimitFix
             catch { }
         }
 
-        // === Postfixes: add delta from the captured TOR/other model over vanilla ===
+        // === Postfixes: rescale IG results using the captured TOR/other model ===
         public static void Post_Member(PartyBase party, bool includeDescriptions, ref ExplainedNumber __result)
         {
             try
@@ -75,11 +75,14 @@ namespace TOR_IG_PartyLimitFix
                 var v = MergeState.Vanilla;
                 if (tor == null || v == null) return;
 
-                var e0 = v.GetPartyMemberSizeLimit(party, includeDescriptions);
-                var et = tor.GetPartyMemberSizeLimit(party, includeDescriptions);
-                float d = et.ResultNumber - e0.ResultNumber;
-                if (MathF.Abs(d) > 1e-4f)
-                    __result.Add(d, new TextObject("{=tor_delta_restore}TOR/Other party bonuses"));
+                // scale IG by TOR/Vanilla ratio to preserve TOR multiplicative rules (e.g., Wood Elf −50%)
+                var e0 = v.GetPartyMemberSizeLimit(party, false);
+                var et = tor.GetPartyMemberSizeLimit(party, false);
+                float baseV = MathF.Max(1e-3f, e0.ResultNumber);
+                float ratio = MathF.Max(0f, et.ResultNumber / baseV);
+                float f = ratio - 1f;
+                if (MathF.Abs(f) > 1e-4f)
+                    __result.AddFactor(f, new TextObject("{=tor_scale_party}TOR/Other party scaling"));
             }
             catch { }
         }
@@ -92,43 +95,22 @@ namespace TOR_IG_PartyLimitFix
                 var v = MergeState.Vanilla;
                 if (tor == null || v == null) return;
 
-                var e0 = v.GetPartyPrisonerSizeLimit(party, includeDescriptions);
-                var et = tor.GetPartyPrisonerSizeLimit(party, includeDescriptions);
-                float d = et.ResultNumber - e0.ResultNumber;
-                if (MathF.Abs(d) > 1e-4f)
-                    __result.Add(d, new TextObject("{=tor_delta_restore_pris}TOR/Other prisoner bonuses"));
+                var e0 = v.GetPartyPrisonerSizeLimit(party, false);
+                var et = tor.GetPartyPrisonerSizeLimit(party, false);
+                float baseV = MathF.Max(1e-3f, e0.ResultNumber);
+                float ratio = MathF.Max(0f, et.ResultNumber / baseV);
+                float f = ratio - 1f;
+                if (MathF.Abs(f) > 1e-4f)
+                    __result.AddFactor(f, new TextObject("{=tor_scale_pris}TOR/Other prisoner scaling"));
             }
             catch { }
         }
 
-        public static void Post_Tier(int clanTier, ref int __result)
-        {
-            try
-            {
-                var tor = MergeState.LastNonIG;
-                var v = MergeState.Vanilla;
-                if (tor == null || v == null) return;
+        // No-op: tier differences are already reflected via the TOR/Vanilla ratio above.
+        public static void Post_Tier(int clanTier, ref int __result) { }
 
-                int d = tor.GetTierPartySizeEffect(clanTier) - v.GetTierPartySizeEffect(clanTier);
-                if (d != 0) __result += d;
-            }
-            catch { }
-        }
-
-        public static void Post_Assumed(Hero hero, IFaction faction, Clan clan, ref int __result)
-        {
-            try
-            {
-                var tor = MergeState.LastNonIG;
-                var v = MergeState.Vanilla;
-                if (tor == null || v == null) return;
-
-                int d = tor.GetAssumedPartySizeForLordParty(hero, faction, clan)
-                        - v.GetAssumedPartySizeForLordParty(hero, faction, clan);
-                if (d != 0) __result += d;
-            }
-            catch { }
-        }
+        // No-op: assumed-size differences are captured by ratio scaling at the member limit stage.
+        public static void Post_Assumed(Hero hero, IFaction faction, Clan clan, ref int __result) { }
 
         // Helpers
         private static PartySizeLimitModel MakeVanilla()
